@@ -31,7 +31,8 @@
     "cordis.patch.yml",
     "README.md",
     "LICENSE",
-    "README.zh-CN.md"
+    "README.zh-CN.md",
+    "PUBLISHING.md"
   ],
   "license": "MIT",
   "scripts": {

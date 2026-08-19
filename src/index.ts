@@ -31,7 +31,7 @@ declare module '@deepseek-ai/cordis' {
 export const name = 'mode-switcher'
 
 /** The command runtime and prompt assembly must exist first. */
-export const inject = ['commands', 'systemPrompt']
+export const inject = ['commands', 'systemPrompt', 'agents']
 
 /** Plugin config, validated by the same-named schemastery schema. */
 export interface Config {

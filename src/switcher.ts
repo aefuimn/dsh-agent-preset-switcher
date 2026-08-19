@@ -59,6 +59,9 @@ export class ModeSwitcherService {
   /** Rolling waiters per session: one per switch request that needs to report. */
   private readonly waiters = new Map<SessionId, Set<(presetId: string) => void>>()
 
+  /** Last applied preset id per session (for waiters registered before arming). */
+  private readonly applied = new Map<SessionId, string>()
+
   /** Serialization chain per session (same shape as the host's presetSwitches). */
   private readonly chains = new Map<SessionId, Promise<void>>()
 
@@ -139,7 +142,7 @@ export class ModeSwitcherService {
 
   /** Return once the armed switch has been applied (or a newer one replaced it). */
   async whenApplied(sessionId: SessionId): Promise<string | undefined> {
-    if (!this.armed.has(sessionId)) return undefined
+    if (!this.armed.has(sessionId)) return this.applied.get(sessionId)
     return new Promise((resolve) => {
       const set = this.waiters.get(sessionId) ?? new Set()
       set.add(resolve)
@@ -195,6 +198,7 @@ export class ModeSwitcherService {
 
   /** Release this session's waiters (idempotent). */
   private settle(sessionId: SessionId, presetId: string): void {
+    this.applied.set(sessionId, presetId)
     const waiters = this.waiters.get(sessionId)
     if (waiters === undefined) return
     this.waiters.delete(sessionId)

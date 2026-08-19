@@ -13,6 +13,10 @@ This repository already meets the manifest requirement:
 - `package.json` declares `dsh.bundle.patch` → `./cordis.patch.yml`
 - `cordis.patch.yml` exists and inserts the plugin row
 - compiled `lib/` is committed, so `dsh plugin add` works without a local build
+- CI (GitHub Actions) runs typecheck / build / tests on every push
+- a node:test suite covers the switcher core (arm, apply, no-op, failure, subagent fence)
+- the registry entry YAML is ready at `registry/aefuimn__dsh-agent-preset-switcher.yml`
+  and was validated against the registry's own generator
 
 ## Step 1 — Make the repo pass the automatic checks
 
@@ -44,7 +48,8 @@ git checkout -b add/dsh-agent-preset-switcher
 
 ## Step 3 — Add one YAML file
 
-Create `data/plugins/aefuimn__dsh-agent-preset-switcher.yml`:
+Create `data/plugins/aefuimn__dsh-agent-preset-switcher.yml`
+(already prepared in this repo at `registry/aefuimn__dsh-agent-preset-switcher.yml`):
 
 ```yaml
 url: https://github.com/aefuimn/dsh-agent-preset-switcher
@@ -72,6 +77,13 @@ npm ci
 node scripts/generate-readme.mjs
 git add data/plugins/aefuimn__dsh-agent-preset-switcher.yml README.md README.zh.md
 git commit -m "add dsh-agent-preset-switcher"
+```
+
+Validated: the generator accepts the entry (`session` category is in the
+registry's `CAT_IDS`), and both READMEs regenerate cleanly with the new
+line. CI's `check-submission.mjs` additionally requires the repo to be
+≥1 day old and ≥10 commits (currently 3) — accumulate commits before opening
+the PR, as noted in Step 1.
 ```
 
 ## Step 5 — Push and open the PR

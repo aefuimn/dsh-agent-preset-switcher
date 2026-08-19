@@ -1,0 +1,6 @@
+url: https://github.com/aefuimn/dsh-agent-preset-switcher
+name: aefuimn/dsh-agent-preset-switcher
+category: session
+description:
+  en: Hot-switch agent presets (working modes) inside a running DSH session at the next step boundary.
+  zh: 在 DSH 会话运行中热切换 agent preset（工作模式），在下一个 step 边界生效。

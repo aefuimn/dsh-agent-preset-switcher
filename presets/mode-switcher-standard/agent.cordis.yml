@@ -1,0 +1,7 @@
+# Example preset bundled with dsh-mode-switcher. It composes a minimal
+# standard-like surface so hot-switching between it and 'standard' is visible
+# (different persona section + no extra tools beyond the host default stack).
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: You are a helpful software engineer assistant running in HOT-SWITCH DEMO MODE.

@@ -15,19 +15,37 @@ DSH 的 agent preset（标准模式 / 极简模式 / PTC 模式 / 自定义预�
 
 ## 快速上手
 
-```bash
-# 1. 安装到 web profile（用户主目录需可写；本沙箱里请由宿主机执行）
-dsh plugin --profile web add link:/path/to/dsh-agent-preset-switcher
+### 从 GitHub 安装（其他用户推荐）
 
-# 2. 重启 dsh web 进程，页面刷新后即生效
+仓库已包含编译产物（\`lib/\`），无需本地构建，直接用 \`dsh plugin\` 安装：
+
+```bash
+# SSH 方式（需要已配置 GitHub SSH key）
+dsh plugin --profile web add "git+ssh://git@github.com/aefuimn/dsh-agent-preset-switcher.git"
+
+# 或 HTTPS 方式（无需 SSH key）
+dsh plugin --profile web add "git+https://github.com/aefuimn/dsh-agent-preset-switcher.git"
 ```
 
-安装后：
+然后重启 dsh web 进程并刷新页面：
+
+```bash
+# 重启你的 dsh web 服务，再硬刷新浏览器标签页
+```
+
+### 从本地目录安装（开发本插件时）
+
+```bash
+dsh plugin --profile web add link:/绝对路径/dsh-agent-preset-switcher
+# 重启 dsh web 并刷新浏览器标签页
+```
+
+### 验证
 
 - 会话 header 多一个**「切换模式」**按钮（browser half，通过官方 `conversation.session.header.actions` 槽位注册）；
 - 任意会话内可执行 **`/mode list`** 与 **`/mode <预设id>`**；
-- 插件自带一个演示 preset `mode-switcher-standard`（"热切换验证模式"），启动时同步到 `$DSH_HOME/.agent-presets`，方便立即验证。
-
+- 插件自带一个演示 preset `mode-switcher-standard`（"热切换验证模式"），启动时同步到 `$DSH_HOME/.agent-presets`，方便立即验证；
+- `dsh plugin --profile web ls` 应能看到 `dsh-agent-preset-switcher` 已安装。
 ## 组件
 
 ```

@@ -15,19 +15,37 @@ This plugin turns that channel into **hot-switching at any stage**: a switch is 
 
 ## Quick start
 
-```bash
-# 1. Install into the web profile (requires a writable home dir; run on the host)
-dsh plugin --profile web add link:/path/to/dsh-agent-preset-switcher
+### Install from GitHub (recommended for everyone else)
 
-# 2. Restart the dsh web process and refresh the page
+The repo ships build artifacts (\`lib/\`), so no local build is needed. Install it as a plugin bundle with \`dsh plugin\`:
+
+```bash
+# SSH (clone/install over SSH; requires your GitHub SSH key)
+dsh plugin --profile web add "git+ssh://git@github.com/aefuimn/dsh-agent-preset-switcher.git"
+
+# or HTTPS (no SSH key needed; a read token may be required for private repos)
+dsh plugin --profile web add "git+https://github.com/aefuimn/dsh-agent-preset-switcher.git"
 ```
 
-After install:
+Then restart the dsh web process and refresh the page:
+
+```bash
+# restart your dsh web server, then hard-refresh the browser tab
+```
+
+### Install from a local checkout (developing this plugin)
+
+```bash
+dsh plugin --profile web add link:/absolute/path/to/dsh-agent-preset-switcher
+# restart dsh web and refresh the browser tab
+```
+
+### Verify
 
 - every session header gains a **「切换模式 / Switch mode」** button (browser half, registered into the official `conversation.session.header.actions` slot);
 - any session accepts **`/mode list`** and **`/mode <preset-id>`** slash commands;
-- a demo preset `mode-switcher-standard` ("Hot-switch verification mode") is synced into `$DSH_HOME/.agent-presets` on startup so the feature is testable immediately.
-
+- a demo preset `mode-switcher-standard` ("Hot-switch verification mode") is synced into `$DSH_HOME/.agent-presets` on startup so the feature is testable immediately;
+- `dsh plugin --profile web ls` should list `dsh-agent-preset-switcher` among the installed packages.
 ## Layout
 
 ```

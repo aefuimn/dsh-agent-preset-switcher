@@ -132,6 +132,23 @@ agent.session.append('agent-preset/selected', { agentPreset: preset.id })
 
 This plugin performs the exact same two steps for a non-blank session — it only moves the moment from "when the request arrives" to inside the `agent/pre-step` waterfall (between model requests). The `recompose` docs explicitly state *the CALLER owns the blank check*: the official RPC chooses the blank check, this plugin chooses the step boundary; the mechanism is the same.
 
+## Hot reload
+
+The browser half can be hot-reloaded **today, in the running web app**: the
+web profile mounts the official `dsh-client-hmr` bundle watcher, so a
+rebuild of `lib/client.js` is picked up within ~500 ms and swapped into open
+pages without a refresh. Run the dev watcher while editing the UI:
+
+```bash
+node scripts/dev-client.mjs
+```
+
+Host-side HMR (hot-swapping `lib/index.js` / `lib/switcher.js` without a
+process restart) is possible — this package keeps no module-level state and
+already cleans up on fiber unload — but the web bundle disables the shared
+host HMR row by design (official TODO). See [docs/hot-reload.md](./docs/hot-reload.md)
+for the two-line dev profile patch and the Node requirements.
+
 ## Build
 
 ```bash

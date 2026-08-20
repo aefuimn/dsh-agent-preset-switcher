@@ -132,6 +132,21 @@ agent.session.append('agent-preset/selected', { agentPreset: preset.id })
 
 本插件在非空白阶段做完全相同的两步，只是把调用时机从「请求到来时」移到 `agent/pre-step` 水瀑内部（模型请求之间）。`recompose` 的注释明确 *the CALLER owns the blank check*——官方 RPC 选择用 blank 检查，本插件选择用 step 边界，机制本身是同一套。
 
+## 热加载
+
+浏览器端的「切换模式」控件支持**运行中热更新**：web 档案始终挂载官方
+`dsh-client-hmr` 打包监听器，重新生成 `lib/client.js` 后约 500ms 内即可
+换入已打开的页面，无需刷新。开发时运行：
+
+```bash
+node scripts/dev-client.mjs
+```
+
+宿主端热替换（不重启进程换 `lib/index.js` / `lib/switcher.js`）同样可行——
+本插件无模块级可变状态，fiber 卸载时会被完整清理——但 web 档案默认禁用了共
+享宿主 HMR（官方 TODO）。详见 [docs/hot-reload.md](./docs/hot-reload.md)（含
+两行 dev 补丁与 Node 要求）。
+
 ## 构建
 
 ```bash

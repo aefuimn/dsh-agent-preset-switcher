@@ -32,14 +32,16 @@
     "README.md",
     "LICENSE",
     "README.zh-CN.md",
-    "PUBLISHING.md"
+    "PUBLISHING.md",
+    "docs"
   ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/build-client.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build:client": "node scripts/build-client.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "dev:client": "node scripts/dev-client.mjs"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",

@@ -17,7 +17,7 @@ This plugin turns that channel into **hot-switching at any stage**: a switch is 
 
 ### Install from GitHub (recommended for everyone else)
 
-The repo ships build artifacts (\`lib/\`), so no local build is needed. Install it as a plugin bundle with \`dsh plugin\`:
+The repo ships build artifacts (`lib/`), so no local build is needed. Install it as a plugin bundle with `dsh plugin`:
 
 ```bash
 # SSH (clone/install over SSH; requires your GitHub SSH key)
@@ -42,38 +42,32 @@ dsh plugin --profile web add link:/absolute/path/to/dsh-agent-preset-switcher
 
 ### Verify
 
-- every session header gains a **「切换模式 / Switch mode」** button (browser half, registered into the official `conversation.session.header.actions` slot);
 - any session accepts **`/mode list`** and **`/mode <preset-id>`** slash commands;
-- a demo preset `mode-switcher-standard` ("Hot-switch verification mode") is synced into `$DSH_HOME/.agent-presets` on startup so the feature is testable immediately;
 - `dsh plugin --profile web ls` should list `dsh-agent-preset-switcher` among the installed packages.
+
 ## Layout
 
 ```
 dsh-agent-preset-switcher/
-├── package.json               # dsh plugin manifest (host + client halves)
+├── package.json               # dsh plugin manifest (host only)
 ├── cordis.patch.yml           # bundle patch that inserts the plugin row
 ├── src/
-│   ├── index.ts               # host half: service registration, /mode command, announcement, demo preset sync
-│   ├── switcher.ts            # hot-switch core (armed -> step-boundary recompose)
-│   └── dsh-home.ts            # $DSH_HOME resolution
-├── scripts/
-│   └── build-client.mjs       # generates lib/client.js (static ModuleLoader bundle)
+│   ├── index.ts               # host half: service registration, /mode command, announcement
+│   └── switcher.ts            # hot-switch core (armed -> step-boundary recompose)
 ├── lib/
-│   ├── index.js / switcher.js / dsh-home.js   # tsc output
-│   └── client.js              # static browser-half bundle
-└── presets/mode-switcher-standard/
-    ├── agent.cordis.yml
-    └── preset.yml
+│   └── index.js / switcher.js # tsc output
+└── test/
+    └── switcher.test.mjs      # unit tests
 ```
 
 ## How it works
 
 ### Triggering
 
-Every path funnels into `ctx.modeSwitcher.request(sessionId, presetId)`. Current entries:
+Everything funnels into `ctx.modeSwitcher.request(sessionId, presetId)`. The current entry is the **`/mode` slash command**:
 
-1. **Browser header button** — reads the roster via `agentPresets.list`, then fires `connection.rpc.call('/api','commands/execute',{agentId, line:'/mode <id>'})`;
-2. **`/mode` slash command** — `/mode list` shows the current preset and full roster; `/mode <id>` requests a switch.
+- `/mode list` shows the current preset and the full roster;
+- `/mode <preset-id>` requests a switch.
 
 A request **arms** the switch (emitting `mode-switcher/requested` after resolving the target preset) rather than applying it immediately.
 
@@ -101,13 +95,6 @@ Key points:
 - **Idempotency & concurrency**: switches for one session are serialized through a per-session promise chain; same-target requests are no-ops.
 - **Subagents**: host rules are preserved — subagent sessions cannot be switched (their composition follows the parent).
 
-## Browser half
-
-- Registers into the official slot `conversation.session.header.actions` (list slot, `order: -5`, right next to the official preset label).
-- The dropdown lists every preset the deployment supplies (name/description/broken), with the current one checked and disabled.
-- Clicking arms the switch; the roster is re-read after success; busy/error state is shown inline.
-- A failed registration never takes the GUI down.
-
 ## Host API
 
 ```ts
@@ -132,37 +119,18 @@ agent.session.append('agent-preset/selected', { agentPreset: preset.id })
 
 This plugin performs the exact same two steps for a non-blank session — it only moves the moment from "when the request arrives" to inside the `agent/pre-step` waterfall (between model requests). The `recompose` docs explicitly state *the CALLER owns the blank check*: the official RPC chooses the blank check, this plugin chooses the step boundary; the mechanism is the same.
 
-## Hot reload
-
-The browser half can be hot-reloaded **today, in the running web app**: the
-web profile mounts the official `dsh-client-hmr` bundle watcher, so a
-rebuild of `lib/client.js` is picked up within ~500 ms and swapped into open
-pages without a refresh. Run the dev watcher while editing the UI:
-
-```bash
-node scripts/dev-client.mjs
-```
-
-Host-side HMR (hot-swapping `lib/index.js` / `lib/switcher.js` without a
-process restart) is possible — this package keeps no module-level state and
-already cleans up on fiber unload — but the web bundle disables the shared
-host HMR row by design (official TODO). See [docs/hot-reload.md](./docs/hot-reload.md)
-for the two-line dev profile patch and the Node requirements.
-
 ## Build
 
 ```bash
 npm install            # dev dependencies (host types)
-npm run build          # tsc for the host half + node scripts/build-client.mjs for the browser half
+npm run build          # tsc for the host half
 ```
-
-The browser half is a hand-written static `window.__ModuleLoader__.load` bundle (no bundler), working through the boot graph's `require('react')` and existing wire APIs.
 
 ## Limitations & follow-ups
 
 - **Step-boundary semantics**: a switch never interrupts the current model request; the longest wait is until the current step finishes.
 - **Transcript consistency**: switching happens between model requests; tool schemas/prompt sections change at the step boundary while history stays as-is (that is the value — and the boundary — of hot switching).
-- Future: the service in `src/index.ts` can gain a browser RPC (Typert/remote face) so future surfaces can call it directly; the current UI goes through the existing `commands/execute` channel, so the host adds zero new wire.
+- Future: the service in `src/index.ts` can gain a browser RPC (Typert/remote face) so future surfaces can call it directly; the current entry goes through the `/mode` slash command, so the host adds zero new wire.
 
 ## License
 

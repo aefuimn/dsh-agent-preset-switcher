@@ -17,7 +17,7 @@ DSH 的 agent preset（标准模式 / 极简模式 / PTC 模式 / 自定义预�
 
 ### 从 GitHub 安装（其他用户推荐）
 
-仓库已包含编译产物（\`lib/\`），无需本地构建，直接用 \`dsh plugin\` 安装：
+仓库已包含编译产物（`lib/`），无需本地构建，直接用 `dsh plugin` 安装：
 
 ```bash
 # SSH 方式（需要已配置 GitHub SSH key）
@@ -42,38 +42,32 @@ dsh plugin --profile web add link:/绝对路径/dsh-agent-preset-switcher
 
 ### 验证
 
-- 会话 header 多一个**「切换模式」**按钮（browser half，通过官方 `conversation.session.header.actions` 槽位注册）；
 - 任意会话内可执行 **`/mode list`** 与 **`/mode <预设id>`**；
-- 插件自带一个演示 preset `mode-switcher-standard`（"热切换验证模式"），启动时同步到 `$DSH_HOME/.agent-presets`，方便立即验证；
 - `dsh plugin --profile web ls` 应能看到 `dsh-agent-preset-switcher` 已安装。
+
 ## 组件
 
 ```
 dsh-agent-preset-switcher/
-├── package.json               # dsh 插件 manifest（host + client 双面）
+├── package.json               # dsh 插件 manifest（仅宿主面）
 ├── cordis.patch.yml           # bundle patch：插入插件行
 ├── src/
-│   ├── index.ts               # 宿主面：服务注册 + /mode 命令 + 通告 + 演示预设同步
-│   ├── switcher.ts            # 热切换核心（armed → step 边界 recompose）
-│   └── dsh-home.ts            # ~/.dsh 解析
-├── scripts/
-│   └── build-client.mjs       # 生成 lib/client.js（静态 ModuleLoader 包）
+│   ├── index.ts               # 宿主面：服务注册 + /mode 命令 + 通告
+│   └── switcher.ts            # 热切换核心（armed → step 边界 recompose）
 ├── lib/
-│   ├── index.js / switcher.js / dsh-home.js   # tsc 产物
-│   └── client.js              # 浏览器面静态包
-└── presets/mode-switcher-standard/
-    ├── agent.cordis.yml
-    └── preset.yml
+│   └── index.js / switcher.js # tsc 产物
+└── test/
+    └── switcher.test.mjs      # 单元测试
 ```
 
 ## 热切换原理
 
 ### 触发
 
-所有请求最终都调用 `ctx.modeSwitcher.request(sessionId, presetId)`。当前入口：
+所有请求最终都调用 `ctx.modeSwitcher.request(sessionId, presetId)`。当前入口是 **`/mode` 斜杠命令**：
 
-1. **浏览器 header 按钮**：读取 `agentPresets.list` 出 roster，点击后经 `connection.rpc.call('/api','commands/execute',{agentId, line:'/mode <id>'})` 触发；
-2. **`/mode` 斜杠命令**：`/mode list` 列出当前预设与全 roster，`/mode <id>` 请求切换。
+- `/mode list` 列出当前预设与全 roster；
+- `/mode <预设id>` 请求切换。
 
 请求是「武装（armed）」而非立即动作：`mode-switcher/requested` 事件发出，目标预设先 resolve 校验。
 
@@ -101,13 +95,6 @@ request(sessionId, targetId)
 - **幂等与并发**：同会话切换经 per-session promise 链串行化；与当前相同则为 no-op。
 - **子代理**：保持宿主规则，子代理会话拒绝切换（其组合跟随父会话）。
 
-## 浏览器面
-
-- 注册到官方槽位 `conversation.session.header.actions`（list 槽，`order: -5`，紧挨官方 preset label）。
-- 下拉列出 deployment 全部 preset（含 name/description/broken），当前项打勾禁用；
-- 点击即武装切换；成功后 roster 重读，busy/error 状态就地反馈；
-- 失败不弹窗不打断。
-
 ## API（宿主）
 
 ```ts
@@ -132,35 +119,18 @@ agent.session.append('agent-preset/selected', { agentPreset: preset.id })
 
 本插件在非空白阶段做完全相同的两步，只是把调用时机从「请求到来时」移到 `agent/pre-step` 水瀑内部（模型请求之间）。`recompose` 的注释明确 *the CALLER owns the blank check*——官方 RPC 选择用 blank 检查，本插件选择用 step 边界，机制本身是同一套。
 
-## 热加载
-
-浏览器端的「切换模式」控件支持**运行中热更新**：web 档案始终挂载官方
-`dsh-client-hmr` 打包监听器，重新生成 `lib/client.js` 后约 500ms 内即可
-换入已打开的页面，无需刷新。开发时运行：
-
-```bash
-node scripts/dev-client.mjs
-```
-
-宿主端热替换（不重启进程换 `lib/index.js` / `lib/switcher.js`）同样可行——
-本插件无模块级可变状态，fiber 卸载时会被完整清理——但 web 档案默认禁用了共
-享宿主 HMR（官方 TODO）。详见 [docs/hot-reload.md](./docs/hot-reload.md)（含
-两行 dev 补丁与 Node 要求）。
-
 ## 构建
 
 ```bash
-npm install                 # 安装 devDependencies（宿主类型）
-npm run build               # tsc 编译 host 面 + node scripts/build-client.mjs 生成浏览器面
+npm install             # 安装 devDependencies（宿主类型）
+npm run build           # tsc 编译宿主面
 ```
-
-浏览器面是手写的静态 `window.__ModuleLoader__.load` 包（不依赖 bundler），通过 boot graph 的 `require('react')` 与既有 wire API 工作，避免引入额外构建链路。
 
 ## 限制与后续
 
 - **step 边界语义**：切换不打断当前模型请求；最长等待 = 当前 step 完成。
 - **transcript 一致性**：切换发生在模型请求之间，工具 schema/提示词在 step 边界更换；历史消息原样保留（这是热切换的价值，也是其边界）。
-- 可扩展：给 `src/index.ts` 的 service 增加 browser RPC（在 host-apiproxy 之外挂 Typert/远程面）即可让未来面直接遥调用，当前 UI 走已有的 `commands/execute` 通道，宿主零新增 wire。
+- 可扩展：给 `src/index.ts` 的 service 增加 browser RPC（在 host-apiproxy 之外挂 Typert/远程面）即可让未来面直接遥调用，当前入口走 `/mode` 斜杠命令，宿主零新增 wire。
 
 ## 协议
 

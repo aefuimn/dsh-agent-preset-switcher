@@ -1,7 +1,5 @@
-# dsh-agent-preset-switcher bundle patch: insert the host and client halves.
-# Applied as a profile bundle layer over dsh-base; the client half (exports
-# "./client", served at /plugins/dsh-agent-preset-switcher/client.js) is the
-# session-header mode control.
+# dsh-agent-preset-switcher bundle patch: insert the host plugin row.
+# Host-only: switching is done with the /mode slash command inside a session.
 - insert:
     - id: mode-switcher
       name: 'dsh-agent-preset-switcher'

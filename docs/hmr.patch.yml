@@ -1,9 +1,0 @@
-# Dev-only: re-enable the shared host HMR row that the dsh-web-app bundle
-# disables (official TODO: "Re-enable shared HMR for Web after its reload
-# lifecycle is tested"). Applied after every bundle patch layer, so this
-# profile-layer row wins over the web-app row.
-# Requires Loader.internal (--expose-internals or node-addon-require-builtin).
-- id: hmr
-  name: '@deepseek-ai/cordis-plugin-hmr'
-  config:
-    root: ['.']
